@@ -1,19 +1,19 @@
 -- Заполнение измерения: Дата
 INSERT INTO dim_date (date_id, full_date, day, month, year, quarter, week_number, day_of_week, day_name, month_name, is_weekend, is_holiday)
 SELECT DISTINCT
-    EXTRACT(YEAR FROM TO_DATE(sale_date, 'MM/DD/YYYY')) * 10000 +
-    EXTRACT(MONTH FROM TO_DATE(sale_date, 'MM/DD/YYYY')) * 100 +
-    EXTRACT(DAY FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS date_id,
-    TO_DATE(sale_date, 'MM/DD/YYYY') AS full_date,
-    EXTRACT(DAY FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS day,
-    EXTRACT(MONTH FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS month,
-    EXTRACT(YEAR FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS year,
-    EXTRACT(QUARTER FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS quarter,
-    EXTRACT(WEEK FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS week_number,
-    EXTRACT(DOW FROM TO_DATE(sale_date, 'MM/DD/YYYY')) AS day_of_week,
-    TO_CHAR(TO_DATE(sale_date, 'MM/DD/YYYY'), 'Day') AS day_name,
-    TO_CHAR(TO_DATE(sale_date, 'MM/DD/YYYY'), 'Month') AS month_name,
-    CASE WHEN EXTRACT(DOW FROM TO_DATE(sale_date, 'MM/DD/YYYY')) IN (0, 6) THEN TRUE ELSE FALSE END AS is_weekend,
+    EXTRACT(YEAR FROM sale_date) * 10000 +
+    EXTRACT(MONTH FROM sale_date) * 100 +
+    EXTRACT(DAY FROM sale_date) AS date_id,
+    sale_date AS full_date,
+    EXTRACT(DAY FROM sale_date) AS day,
+    EXTRACT(MONTH FROM sale_date) AS month,
+    EXTRACT(YEAR FROM sale_date) AS year,
+    EXTRACT(QUARTER FROM sale_date) AS quarter,
+    EXTRACT(WEEK FROM sale_date) AS week_number,
+    EXTRACT(DOW FROM sale_date) AS day_of_week,
+    TO_CHAR(sale_date, 'Day') AS day_name,
+    TO_CHAR(sale_date, 'Month') AS month_name,
+    CASE WHEN EXTRACT(DOW FROM sale_date) IN (0, 6) THEN TRUE ELSE FALSE END AS is_weekend,
     FALSE AS is_holiday
 FROM mock_data;
 
@@ -145,8 +145,8 @@ SELECT DISTINCT
     product_description,
     product_rating,
     product_reviews,
-    TO_DATE(product_release_date, 'MM/DD/YYYY') AS release_date,
-    TO_DATE(product_expiry_date, 'MM/DD/YYYY') AS expiry_date
+    product_release_date AS release_date,
+    product_expiry_date AS expiry_date
 FROM mock_data;
 
 -- Заполнение фактов
@@ -158,14 +158,14 @@ INSERT INTO fact_sales (
 SELECT
     MD5(
         mock_data.id || 
-        mock_data.sale_date || 
-        mock_data.sale_customer_id || 
-        mock_data.sale_seller_id || 
-        mock_data.sale_product_id
+        mock_data.sale_date::TEXT || 
+        mock_data.sale_customer_id::TEXT || 
+        mock_data.sale_seller_id::TEXT || 
+        mock_data.sale_product_id::TEXT
     ) AS sale_id,
-    EXTRACT(YEAR FROM TO_DATE(mock_data.sale_date, 'MM/DD/YYYY')) * 10000 +
-    EXTRACT(MONTH FROM TO_DATE(mock_data.sale_date, 'MM/DD/YYYY')) * 100 +
-    EXTRACT(DAY FROM TO_DATE(mock_data.sale_date, 'MM/DD/YYYY')) AS sale_date_id,
+    EXTRACT(YEAR FROM mock_data.sale_date) * 10000 +
+    EXTRACT(MONTH FROM mock_data.sale_date) * 100 +
+    EXTRACT(DAY FROM mock_data.sale_date) AS sale_date_id,
     mock_data.sale_customer_id AS customer_id,
     mock_data.sale_seller_id AS seller_id,
     (SELECT MD5(store_name || store_location || store_city) FROM mock_data m2 
