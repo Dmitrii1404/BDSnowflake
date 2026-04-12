@@ -19,26 +19,30 @@ FROM mock_data;
 
 -- Заполнение измерения: Покупатель
 INSERT INTO dim_customer (customer_id, first_name, last_name, age, email, country, postal_code)
-SELECT DISTINCT
-    id AS customer_id,
+SELECT DISTINCT ON (sale_customer_id)
+    sale_customer_id AS customer_id,
     customer_first_name,
     customer_last_name,
     customer_age,
     customer_email,
     customer_country,
     customer_postal_code
-FROM mock_data;
+FROM mock_data
+WHERE sale_customer_id IS NOT NULL
+ORDER BY sale_customer_id, id;
 
 -- Заполнение измерения: Продавец
 INSERT INTO dim_seller (seller_id, first_name, last_name, email, country, postal_code)
-SELECT DISTINCT
-    id AS seller_id,
+SELECT DISTINCT ON (sale_seller_id)
+    sale_seller_id AS seller_id,
     seller_first_name,
     seller_last_name,
     seller_email,
     seller_country,
     seller_postal_code
-FROM mock_data;
+FROM mock_data
+WHERE sale_seller_id IS NOT NULL
+ORDER BY sale_seller_id, id;
 
 -- Заполнение измерения: Магазин
 INSERT INTO dim_store (store_id, store_name, location, city, state, country, phone, email)
@@ -133,21 +137,23 @@ INSERT INTO dim_product (
     product_id, product_name, category_id, brand_id, size_id, color_id, 
     material_id, weight, description, rating, reviews_count, release_date, expiry_date
 )
-SELECT DISTINCT
-    id AS product_id,
+SELECT DISTINCT ON (sale_product_id)
+    sale_product_id AS product_id,
     product_name,
-    (SELECT category_id FROM dim_product_category WHERE category_name = mock_data.product_category LIMIT 1) AS category_id,
-    (SELECT brand_id FROM dim_brand WHERE brand_name = mock_data.product_brand LIMIT 1) AS brand_id,
-    (SELECT size_id FROM dim_size WHERE size_name = mock_data.product_size LIMIT 1) AS size_id,
-    (SELECT color_id FROM dim_color WHERE color_name = mock_data.product_color LIMIT 1) AS color_id,
-    (SELECT material_id FROM dim_material WHERE material_name = mock_data.product_material LIMIT 1) AS material_id,
+    (SELECT category_id FROM dim_product_category WHERE category_name = m.product_category LIMIT 1) AS category_id,
+    (SELECT brand_id FROM dim_brand WHERE brand_name = m.product_brand LIMIT 1) AS brand_id,
+    (SELECT size_id FROM dim_size WHERE size_name = m.product_size LIMIT 1) AS size_id,
+    (SELECT color_id FROM dim_color WHERE color_name = m.product_color LIMIT 1) AS color_id,
+    (SELECT material_id FROM dim_material WHERE material_name = m.product_material LIMIT 1) AS material_id,
     product_weight,
     product_description,
     product_rating,
     product_reviews,
     product_release_date AS release_date,
     product_expiry_date AS expiry_date
-FROM mock_data;
+FROM mock_data m
+WHERE sale_product_id IS NOT NULL
+ORDER BY sale_product_id, id;
 
 -- Заполнение фактов
 INSERT INTO fact_sales (
@@ -157,7 +163,7 @@ INSERT INTO fact_sales (
 )
 SELECT
     MD5(
-        mock_data.id || 
+        mock_data.id::TEXT || 
         mock_data.sale_date::TEXT || 
         mock_data.sale_customer_id::TEXT || 
         mock_data.sale_seller_id::TEXT || 
@@ -168,17 +174,12 @@ SELECT
     EXTRACT(DAY FROM mock_data.sale_date) AS sale_date_id,
     mock_data.sale_customer_id AS customer_id,
     mock_data.sale_seller_id AS seller_id,
-    (SELECT MD5(store_name || store_location || store_city) FROM mock_data m2 
-     WHERE m2.id = mock_data.id LIMIT 1) AS store_id,
+    MD5(mock_data.store_name || mock_data.store_location || mock_data.store_city) AS store_id,
     mock_data.sale_product_id AS product_id,
-    (SELECT MD5(supplier_name || supplier_contact || supplier_email) FROM mock_data m3 
-     WHERE m3.id = mock_data.id LIMIT 1) AS supplier_id,
-    (SELECT MD5(customer_pet_type) FROM mock_data m4 
-     WHERE m4.id = mock_data.id LIMIT 1) AS pet_type_id,
-    (SELECT MD5(customer_pet_breed) FROM mock_data m5 
-     WHERE m5.id = mock_data.id LIMIT 1) AS pet_breed_id,
-    (SELECT MD5(pet_category) FROM mock_data m6 
-     WHERE m6.id = mock_data.id LIMIT 1) AS pet_category_id,
+    MD5(mock_data.supplier_name || mock_data.supplier_contact || mock_data.supplier_email) AS supplier_id,
+    MD5(mock_data.customer_pet_type) AS pet_type_id,
+    MD5(mock_data.customer_pet_breed) AS pet_breed_id,
+    MD5(mock_data.pet_category) AS pet_category_id,
     mock_data.product_quantity AS quantity,
     mock_data.product_price AS unit_price,
     mock_data.sale_total_price AS total_price,
