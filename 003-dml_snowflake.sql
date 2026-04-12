@@ -75,7 +75,7 @@ INSERT INTO dim_product_category (category_id, category_name, parent_category_id
 SELECT DISTINCT
     ('x' || SUBSTRING(MD5(product_category) FROM 1 FOR 8))::bit(32)::int AS category_id,
     product_category,
-    NULL AS parent_category_id
+    NULL::INT AS parent_category_id
 FROM mock_data;
 
 -- Заполнение измерения: Бренд продукта
