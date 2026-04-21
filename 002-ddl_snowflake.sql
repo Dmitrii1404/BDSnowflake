@@ -1,14 +1,97 @@
--- DDL скрипты для модели данных "Снежинка" (Snowflake Schema)
+-- измерение покупатели
+CREATE TABLE dim_customers (
+    customer_id SERIAL PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    age INT,
+    country TEXT,
+    postal_code TEXT,
+    pet_type TEXT,
+    pet_name TEXT,
+    pet_breed TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- Измерение: Дата
-CREATE TABLE dim_date (
-    date_id INT PRIMARY KEY,
-    full_date DATE NOT NULL,
+-- измерение продавцы
+CREATE TABLE dim_sellers (
+    seller_id SERIAL PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    country TEXT,
+    postal_code TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- измерение поставщики
+CREATE TABLE dim_suppliers (
+    supplier_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    contact_person TEXT,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    address TEXT,
+    city TEXT,
+    country TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- измерение магазины
+CREATE TABLE dim_stores (
+    store_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    location TEXT,
+    city TEXT,
+    state TEXT,
+    country TEXT,
+    phone TEXT,
+    email TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- измерение категории питомцев
+CREATE TABLE dim_pet_categories (
+category_id SERIAL PRIMARY KEY,
+name TEXT UNIQUE NOT NULL,
+description TEXT,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- измерение продукты
+CREATE TABLE dim_products (
+    product_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    price NUMERIC(10,2) NOT NULL,
+    weight NUMERIC(10,2),
+    color TEXT,
+    size TEXT,
+    brand TEXT,
+    material TEXT,
+    description TEXT,
+    rating NUMERIC(3,1),
+    reviews_count INT,
+    release_date DATE,
+    expiry_date DATE,
+    supplier_id INT REFERENCES dim_suppliers(supplier_id),
+    pet_category_id INT REFERENCES dim_pet_categories(category_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- измерение даты
+CREATE TABLE dim_dates (
+    date_id SERIAL PRIMARY KEY,
+    full_date DATE UNIQUE NOT NULL,
     day INT NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,
     quarter INT NOT NULL,
-    week_number INT NOT NULL,
     day_of_week INT NOT NULL,
     day_name TEXT NOT NULL,
     month_name TEXT NOT NULL,
@@ -16,139 +99,17 @@ CREATE TABLE dim_date (
     is_holiday BOOLEAN DEFAULT FALSE
 );
 
--- Измерение: Покупатель
-CREATE TABLE dim_customer (
-    customer_id INT PRIMARY KEY,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    age INT,
-    email TEXT,
-    country TEXT NOT NULL,
-    postal_code TEXT
-);
-
--- Измерение: Продавец
-CREATE TABLE dim_seller (
-    seller_id INT PRIMARY KEY,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    country TEXT NOT NULL,
-    postal_code TEXT
-);
-
--- Измерение: Магазин
-CREATE TABLE dim_store (
-    store_id INT PRIMARY KEY,
-    store_name TEXT NOT NULL,
-    location TEXT,
-    city TEXT,
-    state TEXT,
-    country TEXT NOT NULL,
-    phone TEXT,
-    email TEXT
-);
-
--- Измерение: Поставщик
-CREATE TABLE dim_supplier (
-    supplier_id INT PRIMARY KEY,
-    supplier_name TEXT NOT NULL,
-    contact_person TEXT,
-    email TEXT,
-    phone TEXT,
-    address TEXT,
-    city TEXT,
-    country TEXT NOT NULL
-);
-
--- Измерение: Категория продукта
-CREATE TABLE dim_product_category (
-    category_id INT PRIMARY KEY,
-    category_name TEXT NOT NULL,
-    parent_category_id INT REFERENCES dim_product_category(category_id)
-);
-
--- Измерение: Бренд продукта
-CREATE TABLE dim_brand (
-    brand_id INT PRIMARY KEY,
-    brand_name TEXT NOT NULL UNIQUE
-);
-
--- Измерение: Размер продукта
-CREATE TABLE dim_size (
-    size_id INT PRIMARY KEY,
-    size_name TEXT NOT NULL UNIQUE
-);
-
--- Измерение: Цвет продукта
-CREATE TABLE dim_color (
-    color_id INT PRIMARY KEY,
-    color_name TEXT NOT NULL UNIQUE
-);
-
--- Измерение: Материал продукта
-CREATE TABLE dim_material (
-    material_id INT PRIMARY KEY,
-    material_name TEXT NOT NULL UNIQUE
-);
-
--- Измерение: Тип питомца
-CREATE TABLE dim_pet_type (
-    pet_type_id INT PRIMARY KEY,
-    pet_type_name TEXT NOT NULL UNIQUE
-);
-
--- Измерение: Порода питомца
-CREATE TABLE dim_pet_breed (
-    pet_breed_id INT PRIMARY KEY,
-    pet_breed_name TEXT NOT NULL,
-    pet_type_id INT REFERENCES dim_pet_type(pet_type_id)
-);
-
--- Измерение: Категория питомца
-CREATE TABLE dim_pet_category (
-    pet_category_id INT PRIMARY KEY,
-    pet_category_name TEXT NOT NULL UNIQUE
-);
-
--- Измерение: Продукт (нормализованное)
-CREATE TABLE dim_product (
-    product_id INT PRIMARY KEY,
-    product_name TEXT NOT NULL,
-    category_id INT REFERENCES dim_product_category(category_id),
-    brand_id INT REFERENCES dim_brand(brand_id),
-    size_id INT REFERENCES dim_size(size_id),
-    color_id INT REFERENCES dim_color(color_id),
-    material_id INT REFERENCES dim_material(material_id),
-    weight DECIMAL,
-    description TEXT,
-    rating DECIMAL,
-    reviews_count INT,
-    release_date DATE,
-    expiry_date DATE
-);
-
--- Таблица фактов
+-- факт продажи
 CREATE TABLE fact_sales (
-    sale_id BIGINT PRIMARY KEY,
-    sale_date_id INT REFERENCES dim_date(date_id),
-    customer_id INT REFERENCES dim_customer(customer_id),
-    seller_id INT REFERENCES dim_seller(seller_id),
-    store_id INT REFERENCES dim_store(store_id),
-    product_id INT REFERENCES dim_product(product_id),
-    supplier_id INT REFERENCES dim_supplier(supplier_id),
-    pet_type_id INT REFERENCES dim_pet_type(pet_type_id),
-    pet_breed_id INT REFERENCES dim_pet_breed(pet_breed_id),
-    pet_category_id INT REFERENCES dim_pet_category(pet_category_id),
+    sale_id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES dim_customers(customer_id),
+    seller_id INT REFERENCES dim_sellers(seller_id),
+    product_id INT REFERENCES dim_products(product_id),
+    store_id INT REFERENCES dim_stores(store_id),
+    date_id INT REFERENCES dim_dates(date_id),
     quantity INT NOT NULL,
-    unit_price DECIMAL NOT NULL,
-    total_price DECIMAL NOT NULL,
-    sale_quantity INT NOT NULL
+    unit_price NUMERIC(10,2) NOT NULL,
+    total_price NUMERIC(10,2) NOT NULL,
+    original_sale_id BIGINT, -- ID из исходных данных
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_fact_sales_date ON fact_sales(sale_date_id);
-CREATE INDEX idx_fact_sales_customer ON fact_sales(customer_id);
-CREATE INDEX idx_fact_sales_seller ON fact_sales(seller_id);
-CREATE INDEX idx_fact_sales_store ON fact_sales(store_id);
-CREATE INDEX idx_fact_sales_product ON fact_sales(product_id);
-CREATE INDEX idx_fact_sales_supplier ON fact_sales(supplier_id);

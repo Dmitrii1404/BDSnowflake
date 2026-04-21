@@ -10,6 +10,8 @@
 <img width="1411" height="692" alt="Лабораторная работа 1" src="https://github.com/user-attachments/assets/0282c756-76a3-48f7-86e4-df6e1ec6ac89" />
 
 
+![diagram.png](diagram.png)
+
 Алгоритм:
 1. форкнуть к себе этот репозиторий.
 2. Устанавливаете себе инструмент для работы с запросами SQL (рекомендую DBeaver).

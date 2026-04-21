@@ -9,14 +9,13 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: bigdata_snowflake
     ports:
-      - "5432:5432"
+      - "5437:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./исходные данные:/data/source_data
       - ./001-init_db.sql:/docker-entrypoint-initdb.d/001-init_db.sql
       - ./002-ddl_snowflake.sql:/docker-entrypoint-initdb.d/002_ddl.sql
       - ./003-dml_snowflake.sql:/docker-entrypoint-initdb.d/003_dml.sql
-      - ./004-validation_queries.sql:/docker-entrypoint-initdb.d/004_dml.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
